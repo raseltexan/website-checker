@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* ───────── Texan design tokens ───────── */
+@theme {
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand: #ffcc00;
+  --color-brand-50: #fffbea;
+  --color-brand-100: #fff3c2;
+  --color-brand-600: #e6b800;
+  --color-brand-700: #b38f00;
+  --color-ink: #000000;
+  --color-ink-900: #0b0b0b;
+  --color-ink-800: #161616;
+  --color-ink-700: #232323;
+  --color-surface: #ffffff;
+  --color-canvas: #f7f7f5;
+  --color-line: #e8e8e4;
+  --color-muted: #6b6b66;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-canvas text-ink-900 font-sans;
+  }
+  ::selection {
+    @apply bg-brand text-ink;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+  /* Tailwind v4 resets buttons to the default cursor; restore a pointer on every interactive element. */
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="switch"],
+  [role="menuitem"],
+  [role="option"],
+  select:not(:disabled),
+  summary,
+  label[for],
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  input[type="range"]:not(:disabled),
+  input[type="color"]:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+/* ───────── Print (PDF report) ───────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  .print-break {
+    break-inside: avoid;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
