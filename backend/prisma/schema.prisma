@@ -1,0 +1,367 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CheckStatus {
+  PASS
+  WARN
+  FAIL
+  ERROR
+  SKIPPED
+  UNAVAILABLE
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum LogLevel {
+  INFO
+  WARNING
+  SECURITY
+}
+
+// ─────────────────────────────────────────────
+// Better Auth core models (user, session, account, verification)
+// ─────────────────────────────────────────────
+
+model User {
+  id            String   @id @map("_id")
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // admin plugin
+  role       String?   @default("user")
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  // profile
+  company  String?
+  timezone String? @default("UTC")
+
+  sessions      Session[]
+  accounts      Account[]
+  websites      Website[]
+  scans         Scan[]
+  reports       Report[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  subscription  Subscription?
+
+  @@map("user")
+}
+
+model Session {
+  id             String   @id @map("_id")
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  impersonatedBy String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @map("_id")
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @map("_id")
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ─────────────────────────────────────────────
+// Domain models
+// ─────────────────────────────────────────────
+
+model Website {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String
+  name       String
+  url        String
+  domain     String
+  tags       String[]
+  lastScanAt DateTime?
+  lastScore  Int?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scans   Scan[]
+  reports Report[]
+
+  @@unique([userId, url])
+  @@index([domain])
+  @@map("websites")
+}
+
+model Scan {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String
+  websiteId      String?    @db.ObjectId
+  url            String
+  finalUrl       String?
+  status         ScanStatus @default(QUEUED)
+  progress       Int        @default(0)
+  selectedChecks String[]
+  score          Int?
+  categoryScores Json?
+  summary        Json?
+  error          String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  website Website?     @relation(fields: [websiteId], references: [id], onDelete: SetNull)
+  results ScanResult[]
+  report  Report?
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("scans")
+}
+
+model ScanResult {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  scanId      String      @db.ObjectId
+  checkKey    String
+  categoryKey String
+  name        String
+  status      CheckStatus
+  severity    Severity    @default(MEDIUM)
+  score       Int?
+  message     String
+  details     Json?
+  durationMs  Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  scan Scan @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([scanId])
+  @@map("scan_results")
+}
+
+model Report {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  scanId    String   @unique @db.ObjectId
+  userId    String
+  websiteId String?  @db.ObjectId
+  title     String
+  url       String
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scan    Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  website Website? @relation(fields: [websiteId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@map("reports")
+}
+
+model CheckerCategory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique
+  name        String
+  description String
+  icon        String   @default("circle-check")
+  order       Int      @default(0)
+  isEnabled   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  checks Check[]
+
+  @@map("checker_categories")
+}
+
+model Check {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique
+  categoryId  String   @db.ObjectId
+  name        String
+  description String
+  severity    Severity @default(MEDIUM)
+  weight      Int      @default(1)
+  order       Int      @default(0)
+  isEnabled   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category CheckerCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@map("checks")
+}
+
+model Plan {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug         String   @unique
+  name         String
+  description  String   @default("")
+  priceMonthly Int      @default(0) // cents
+  priceYearly  Int      @default(0) // cents
+  scanLimit    Int      @default(10) // per month, -1 = unlimited
+  websiteLimit Int      @default(1) // -1 = unlimited
+  features     String[]
+  isActive     Boolean  @default(true)
+  isDefault    Boolean  @default(false)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String             @unique
+  planId            String             @db.ObjectId
+  status            SubscriptionStatus @default(ACTIVE)
+  interval          String             @default("monthly")
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@map("subscriptions")
+}
+
+model Notification {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  level     LogLevel @default(INFO)
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([level])
+  @@map("activity_logs")
+}
+
+model EmailLog {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  to        String
+  subject   String
+  template  String
+  status    EmailStatus
+  error     String?
+  createdAt DateTime    @default(now())
+
+  @@index([createdAt])
+  @@map("email_logs")
+}
+
+model AppSetting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}
