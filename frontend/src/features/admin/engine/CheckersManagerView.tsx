@@ -35,7 +35,12 @@ function CategoryPanel({ category }: { category: CheckerCategory }) {
           <p className="font-bold">{category.name}</p>
           <p className="truncate text-xs text-muted">{category.description} · {enabled}/{category.checks.length} checks enabled</p>
         </button>
-        <Switch label={`Enable ${category.name}`} checked={category.isEnabled} disabled={isLoading} onChange={toggle} />
+        <Switch
+          label={`Enable ${category.name}`}
+          checked={category.isEnabled}
+          disabled={isLoading || category.checks.some((c) => c.mandatory)}
+          onChange={toggle}
+        />
         <button type="button" onClick={() => setOpen((v) => !v)} className="grid size-8 place-items-center rounded-lg hover:bg-canvas" aria-label="Toggle checks">
           <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
         </button>

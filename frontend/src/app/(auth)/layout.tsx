@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <aside className="relative hidden overflow-hidden bg-ink p-12 text-white lg:flex lg:flex-col">
         <div className="absolute -top-32 -right-32 size-96 rounded-full bg-brand/20 blur-3xl" aria-hidden />
         <div className="absolute bottom-0 left-0 h-2 w-full bg-brand" aria-hidden />
-        <Logo inverted />
+        <Logo className="brightness-0 invert" inverted />
         <div className="relative my-auto max-w-md">
           <p className="text-xs font-bold tracking-[0.25em] text-brand uppercase">Website intelligence</p>
           <h2 className="mt-4 text-4xl leading-tight font-extrabold tracking-tight">
@@ -30,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-white/40">© Texan. All rights reserved.</p>
+        <p className="relative text-xs text-white">© Texan. All rights reserved.</p>
       </aside>
       <main className="flex flex-col bg-surface px-6 py-10 sm:px-12">
         <div className="lg:hidden">

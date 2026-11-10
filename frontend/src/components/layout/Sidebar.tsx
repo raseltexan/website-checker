@@ -29,7 +29,11 @@ export function Sidebar() {
         )}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <Logo href={inAdmin ? ADMIN_BASE : "/dashboard"} inverted />
+          <Logo
+            className="brightness-0 invert"
+            href={inAdmin ? ADMIN_BASE : "/dashboard"}
+            inverted
+          />
           <button className="text-white/60 hover:text-white lg:hidden" onClick={close} aria-label="Close menu">
             <X className="size-5" />
           </button>

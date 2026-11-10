@@ -17,14 +17,16 @@ export function useAuth() {
   };
 }
 
-export function useLogout() {
+/** Signs out, clears cached API state and navigates to `redirectTo` (default: /login). */
+export function useLogout(redirectTo = "/login") {
   const [signOut, { isLoading }] = useSignOutMutation();
   const dispatch = useAppDispatch();
   const router = useRouter();
   const logout = useCallback(async () => {
     await signOut().catch(() => undefined);
     dispatch(api.util.resetApiState());
-    router.replace("/login");
-  }, [signOut, dispatch, router]);
+    router.replace(redirectTo);
+    router.refresh();
+  }, [signOut, dispatch, router, redirectTo]);
   return { logout, isLoading };
 }

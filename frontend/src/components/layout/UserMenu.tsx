@@ -2,14 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, CreditCard, LogOut, Settings, Shield, User } from "lucide-react";
+import { ChevronDown, CreditCard, LayoutDashboard, LogOut, Settings, Shield, User } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 import { ADMIN_BASE } from "@/lib/navigation";
 
-export function UserMenu() {
+interface UserMenuProps {
+  /** Adds a "Dashboard" entry — used outside the dashboard (e.g. the home page). */
+  showDashboardLink?: boolean;
+  /** Where to go after signing out. */
+  logoutRedirect?: string;
+}
+
+export function UserMenu({ showDashboardLink = false, logoutRedirect }: UserMenuProps = {}) {
   const { user, isAdmin } = useAuth();
-  const { logout, isLoading } = useLogout();
+  const { logout, isLoading } = useLogout(logoutRedirect);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -20,6 +27,7 @@ export function UserMenu() {
   }, []);
 
   const links = [
+    ...(showDashboardLink ? [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] : []),
     { href: "/dashboard/profile", label: "Profile", icon: User },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
     { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
@@ -48,7 +56,7 @@ export function UserMenu() {
             ))}
             <button onClick={logout} disabled={isLoading} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-danger hover:bg-red-50" role="menuitem">
               <LogOut className="size-4" />
-              Sign out
+              Log out
             </button>
           </div>
         </div>

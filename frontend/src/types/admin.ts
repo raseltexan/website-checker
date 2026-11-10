@@ -73,7 +73,7 @@ export interface EmailOverview {
 export interface BrowserTestingData {
   config: BrowserSettings;
   status: BrowserProviderStatus;
-  checks: (Omit<Check, "requires" | "available" | "unavailableReason"> & { category: { name: string } })[];
+  checks: (Omit<Check, "requires" | "mandatory" | "available" | "unavailableReason"> & { category: { name: string } })[];
 }
 
 export interface ScanQueueStats {

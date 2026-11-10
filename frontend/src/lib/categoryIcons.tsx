@@ -1,5 +1,5 @@
 import { createElement } from "react";
-import { Accessibility, CircleCheck, Gauge, Link2, Lock, Mail, Monitor, Search, Shield, Smartphone, type LucideIcon } from "lucide-react";
+import { Accessibility, CircleCheck, Gauge, Link2, Lock, Mail, Monitor, Ruler, Search, Shield, Smartphone, type LucideIcon } from "lucide-react";
 
 /** Maps the backend category `icon` key to a Lucide icon. */
 const ICONS: Record<string, LucideIcon> = {
@@ -12,6 +12,7 @@ const ICONS: Record<string, LucideIcon> = {
   smartphone: Smartphone,
   mail: Mail,
   monitor: Monitor,
+  layout: Ruler,
 };
 
 /** Renders the icon for a checker category key (stable component, safe for the React Compiler). */

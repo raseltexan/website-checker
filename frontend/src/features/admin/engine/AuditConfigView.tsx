@@ -17,6 +17,7 @@ const int = (min: number, max: number) => z.number({ error: "Required" }).int().
 const schema = z.object({
   requestTimeoutMs: int(2000, 60000),
   maxLinksToCheck: int(0, 200),
+  maxPagesToCrawl: int(1, 50),
   maxRedirects: int(0, 20),
   slowTtfbMs: int(100, 10000),
   maxPageSizeKb: int(100, 20000),
@@ -27,6 +28,7 @@ const FIELDS: { name: keyof AuditSettings; label: string; hint: string }[] = [
   { name: "requestTimeoutMs", label: "Request timeout (ms)", hint: "Abort network requests after this long." },
   { name: "maxRedirects", label: "Max redirects", hint: "Redirect hops followed before failing." },
   { name: "maxLinksToCheck", label: "Links to check per scan", hint: "Broken-link check sample size. 0 disables probing." },
+  { name: "maxPagesToCrawl", label: "Pages to crawl per scan", hint: "Internal pages analysed by the layout & spacing checks." },
   { name: "slowTtfbMs", label: "Slow response threshold (ms)", hint: "Warn above this; fail above double." },
   { name: "maxPageSizeKb", label: "Max HTML size (KB)", hint: "Fail when the HTML document exceeds this." },
   { name: "sslExpiryWarningDays", label: "SSL expiry warning (days)", hint: "Warn when the certificate expires sooner." },

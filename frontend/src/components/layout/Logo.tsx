@@ -12,7 +12,7 @@ interface LogoProps {
 /** Brand mark. Replace /public/logo.svg with the official Texan logo file to update it everywhere. */
 export function Logo({ href = "/", inverted, className }: LogoProps) {
   return (
-    <Link href={href} className={cn("inline-flex items-center gap-2.5", className)} aria-label="Texan Website Checker home">
+    <Link href='/' className={cn("inline-flex items-center gap-2.5", className)} aria-label="Texan Website Checker home">
       <Image src={logo} alt="" width={200} height={200} priority />
       
     </Link>

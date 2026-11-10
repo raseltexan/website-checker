@@ -42,16 +42,16 @@ export function CheckerForm({ defaultUrl = "", websiteId }: CheckerFormProps) {
   const [touched, setTouched] = useState<Set<string> | null>(null);
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema), defaultValues: { url: defaultUrl } });
 
-  const availableKeys = useMemo(
-    () => (catalog.data ?? []).flatMap((c) => c.checks.filter((k) => k.available).map((k) => k.key)),
-    [catalog.data],
-  );
-  // Until the user edits the selection, everything available is selected.
-  const selected = touched ?? new Set(availableKeys);
+  const { availableKeys, mandatoryKeys } = useMemo(() => {
+    const checks = (catalog.data ?? []).flatMap((c) => c.checks.filter((k) => k.available));
+    return { availableKeys: checks.map((k) => k.key), mandatoryKeys: checks.filter((k) => k.mandatory).map((k) => k.key) };
+  }, [catalog.data]);
+  // Until the user edits the selection, everything available is selected. Mandatory checks are always included.
+  const selected = new Set([...(touched ?? availableKeys), ...mandatoryKeys]);
 
   const toggle = (keys: string[], checked: boolean) => {
     const next = new Set(selected);
-    keys.forEach((k) => (checked ? next.add(k) : next.delete(k)));
+    keys.forEach((k) => (checked ? next.add(k) : !mandatoryKeys.includes(k) && next.delete(k)));
     setTouched(next);
   };
 

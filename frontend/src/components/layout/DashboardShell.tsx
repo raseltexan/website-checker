@@ -25,14 +25,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen">
-      <Sidebar />
-      <div className="lg:pl-3 print:pl-0">
-        <Topbar />
-        <main className="mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-1 lg:py-8">
-          <Suspense fallback={<LoadingState />}>{children}</Suspense>
-        </main>
-      </div>
-    </div>
+   <div className="min-h-screen">
+  <Sidebar />
+  <div className="lg:pl-[17rem] print:pl-0">
+    <Topbar />
+    <main className="mx-auto w-full max-w-[1760px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <Suspense fallback={<LoadingState />}>{children}</Suspense>
+    </main>
+  </div>
+</div>
   );
 }

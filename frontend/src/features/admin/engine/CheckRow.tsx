@@ -25,6 +25,7 @@ export function CheckRow({ check, disabled }: { check: Check; disabled?: boolean
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-bold">{check.name}</p>
           <code className="rounded bg-canvas px-1.5 py-0.5 text-[11px] text-muted">{check.key}</code>
+          {check.mandatory && <Badge tone="warning">Mandatory</Badge>}
           {check.requires && <Badge tone={check.available ? "success" : "warning"}>{check.available ? "Integration ready" : "Needs integration"}</Badge>}
         </div>
         <p className="mt-0.5 text-xs text-muted">{check.description}</p>
@@ -46,7 +47,7 @@ export function CheckRow({ check, disabled }: { check: Check; disabled?: boolean
             if (weight !== check.weight) save({ weight });
           }}
         />
-        <Switch label={`Enable ${check.name}`} checked={check.isEnabled} disabled={disabled || isLoading} onChange={(isEnabled) => save({ isEnabled })} />
+        <Switch label={`Enable ${check.name}`} checked={check.isEnabled} disabled={disabled || isLoading || check.mandatory} onChange={(isEnabled) => save({ isEnabled })} />
       </div>
     </li>
   );

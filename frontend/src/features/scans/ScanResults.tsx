@@ -65,7 +65,7 @@ export function ScanResults({ results, categoryScores, categories }: ScanResults
       {visible.map((group) => {
         return (
           <Card key={group.key} className="print-break overflow-hidden">
-            <div className="flex items-center gap-3 border-b border-line bg-canvas/60 px-5 py-3">
+            <div className="flex  items-center gap-3 border-b border-line bg-canvas/60 px-5 py-3">
               <span className="grid size-8 place-items-center rounded-lg bg-brand text-ink"><CategoryIcon icon={group.icon} className="size-4" /></span>
               <h3 className="flex-1 font-bold">{group.name}</h3>
               <ScorePill score={categoryScores?.[group.key] ?? null} />

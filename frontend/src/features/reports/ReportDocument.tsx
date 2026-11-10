@@ -6,6 +6,7 @@ import { ScanResults } from "@/features/scans/ScanResults";
 import { CHECK_STATUS, SeverityBadge } from "@/features/scans/StatusBadges";
 import type { ReportDetail, Severity } from "@/types/models";
 import { formatDateTime } from "@/utils/format";
+import { logo } from "../../../public/images";
 
 const SEVERITY_RANK: Record<Severity, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
@@ -22,14 +23,20 @@ export function ReportDocument({ report }: { report: ReportDetail }) {
   const count = (s: string) => results.filter((r) => r.status === s).length;
 
   return (
-    <article className="print-area mx-auto max-w-4xl space-y-6">
+    <article className="print-area mx-auto max-w-9xl space-y-6">
       <Card className="print-area overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-4 bg-ink px-6 py-5 text-white">
-          <div className="flex items-center gap-3">
-            <Image src="/logo.svg" alt="Texan" width={40} height={40} />
-            <div>
-              <p className="text-lg font-extrabold tracking-tight">TEXAN</p>
+          <div className="flex flex-col justify-start items-center gap-3">
+            <Image
+              className="brightness-0 invert"
+              src={logo}
+              alt="Texan"
+              width={120}
+              height={100}
+            />
               <p className="text-[10px] font-bold tracking-[0.2em] text-brand uppercase">Website Audit Report</p>
+            <div>
+
             </div>
           </div>
           <div className="text-right text-xs text-white/70">

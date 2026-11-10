@@ -154,6 +154,8 @@ export interface Check {
   order: number;
   isEnabled: boolean;
   requires: "browser" | null;
+  /** Always runs on every scan; cannot be deselected or disabled. */
+  mandatory: boolean;
   available: boolean;
   unavailableReason: string | null;
 }
@@ -243,6 +245,7 @@ export interface GeneralSettings {
 export interface AuditSettings {
   requestTimeoutMs: number;
   maxLinksToCheck: number;
+  maxPagesToCrawl: number;
   maxRedirects: number;
   slowTtfbMs: number;
   maxPageSizeKb: number;
@@ -266,4 +269,13 @@ export interface AppSettings {
   general: GeneralSettings;
   audit: AuditSettings;
   browser: BrowserSettings;
+}
+
+/** Live numbers shown on the public home page (GET /public/checkers/stats). */
+export interface PublicStats {
+  checks: number;
+  categories: number;
+  scansCompleted: number;
+  websitesAudited: number;
+  categoryList: { key: string; name: string; description: string; icon: string; checks: number }[];
 }
