@@ -7,6 +7,10 @@ import { updateCategorySchema, updateCheckSchema } from "./checkers.validation.j
 export const checkersRouter = Router();
 checkersRouter.get("/", controller.listEnabled);
 
+/** Unauthenticated — powers the live numbers on the home page. */
+export const publicCheckersRouter = Router();
+publicCheckersRouter.get("/stats", controller.stats);
+
 export const adminCheckersRouter = Router();
 adminCheckersRouter.get("/", controller.listAll);
 adminCheckersRouter.patch("/categories/:id", validate({ params: idParam, body: updateCategorySchema }), controller.updateCategory);

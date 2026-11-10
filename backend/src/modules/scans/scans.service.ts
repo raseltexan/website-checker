@@ -6,6 +6,7 @@ import { buildListArgs, buildSearch, paginate } from "../../utils/query.js";
 import { scanQueue } from "../../engine/runner.js";
 import { assertScanQuota } from "../billing/billing.service.js";
 import { enabledCheckKeys } from "../checkers/checkers.service.js";
+import { MANDATORY_CHECK_KEYS } from "../../engine/registry.js";
 import { ensureWebsiteForUrl, getWebsite } from "../websites/websites.service.js";
 import type { createScanSchema, ScanListQuery } from "./scans.validation.js";
 
@@ -17,7 +18,9 @@ export const createScan = async (userId: string, input: z.infer<typeof createSca
   await assertScanQuota(userId);
 
   const enabled = await enabledCheckKeys();
-  const selectedChecks = input.checks?.length ? input.checks.filter((k) => enabled.includes(k)) : enabled;
+  const chosen = input.checks?.length ? input.checks.filter((k) => enabled.includes(k)) : enabled;
+  // Mandatory checks (layout & spacing consistency) always run, whatever was selected.
+  const selectedChecks = [...new Set([...chosen, ...MANDATORY_CHECK_KEYS])];
   if (!selectedChecks.length) throw ApiError.badRequest("Select at least one available check");
 
   const website = input.websiteId ? await getWebsite(input.websiteId, userId) : await ensureWebsiteForUrl(userId, url);

@@ -17,6 +17,23 @@ export interface PageResponse {
   redirects: { url: string; status: number }[];
 }
 
+export interface CrawledPage {
+  url: string;
+  status: number;
+  html: string;
+  $: cheerio.CheerioAPI;
+}
+
+export interface TextResource {
+  url: string;
+  status: number;
+  contentType: string;
+  body: string;
+}
+
+/** File extensions that are never HTML pages, skipped while crawling. */
+const NON_PAGE_EXT = /\.(?:pdf|zip|rar|gz|jpe?g|png|gif|webp|avif|svg|ico|mp4|webm|mp3|wav|css|js|json|xml|txt|docx?|xlsx?|pptx?)$/i;
+
 export interface TlsInfo {
   authorized: boolean;
   authorizationError?: string;
@@ -38,6 +55,8 @@ export class ScanContext {
   private dom?: cheerio.CheerioAPI;
   private readonly resourceCache = new Map<string, Promise<{ status: number; body: string } | null>>();
   private readonly hostCache = new Map<string, Promise<boolean>>();
+  private readonly textCache = new Map<string, Promise<TextResource | null>>();
+  private crawlPromise?: Promise<CrawledPage[]>;
 
   constructor(
     url: string,
@@ -128,6 +147,94 @@ export class ScanContext {
     return this.resourceCache.get(path)!;
   }
 
+  /**
+   * Fetches any absolute URL (any public host) as text, following redirects.
+   * Used for stylesheets and crawled pages. Returns null on network failure.
+   */
+  fetchText(url: string, maxBytes = 2_000_000) {
+    if (!this.textCache.has(url)) {
+      const promise = (async (): Promise<TextResource | null> => {
+        try {
+          const { res, finalUrl } = await this.follow(url);
+          const contentType = res.headers.get("content-type") ?? "";
+          const body = res.ok ? Buffer.from(await res.arrayBuffer()).subarray(0, maxBytes).toString("utf8") : "";
+          if (!res.ok) await res.body?.cancel().catch(() => undefined);
+          return { url: finalUrl, status: res.status, contentType, body };
+        } catch {
+          return null;
+        }
+      })();
+      this.textCache.set(url, promise);
+    }
+    return this.textCache.get(url)!;
+  }
+
+  /**
+   * Same-origin crawl: the scanned page plus internal pages discovered from its links
+   * and /sitemap.xml, up to `maxPagesToCrawl`. Shared by every multi-page check.
+   */
+  crawl(): Promise<CrawledPage[]> {
+    this.crawlPromise ??= (async () => {
+      const home = await this.page();
+      const origin = new URL(home.finalUrl).origin;
+      const limit = this.settings.maxPagesToCrawl;
+      const pages: CrawledPage[] = [{ url: home.finalUrl, status: home.status, html: home.html, $: await this.$() }];
+      const seen = new Set([canonicalPath(home.finalUrl)]);
+
+      const normalize = (href: string, base: string) => {
+        try {
+          const u = new URL(href, base);
+          u.hash = "";
+          if (u.origin !== origin || NON_PAGE_EXT.test(u.pathname)) return null;
+          return u.toString();
+        } catch {
+          return null;
+        }
+      };
+      const linksOf = ($: cheerio.CheerioAPI, base: string) =>
+        $("a[href]")
+          .map((_, el) => $(el).attr("href") ?? "")
+          .get()
+          .filter((h) => h && !/^(#|mailto:|tel:|javascript:|data:)/i.test(h))
+          .map((h) => normalize(h, base))
+          .filter((u): u is string => Boolean(u));
+
+      const queue = linksOf(pages[0]!.$, home.finalUrl);
+      const sitemap = await this.resource("/sitemap.xml");
+      if (sitemap?.body) {
+        for (const m of sitemap.body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) {
+          const u = normalize(m[1]!, home.finalUrl);
+          if (u) queue.push(u);
+        }
+      }
+
+      // Breadth-first, fetching a few pages at a time.
+      while (queue.length && pages.length < limit) {
+        const batch: string[] = [];
+        while (queue.length && batch.length < Math.min(4, limit - pages.length)) {
+          const next = queue.shift()!;
+          const key = canonicalPath(next);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          batch.push(next);
+        }
+        const fetched = await Promise.all(batch.map((u) => this.fetchText(u)));
+        for (const res of fetched) {
+          if (!res || res.status >= 400 || !/html/i.test(res.contentType) || !res.body) continue;
+          // A redirect may land on a page that was already crawled.
+          if (pages.some((p) => canonicalPath(p.url) === canonicalPath(res.url))) continue;
+          const $ = cheerio.load(res.body);
+          pages.push({ url: res.url, status: res.status, html: res.body, $ });
+          seen.add(canonicalPath(res.url));
+          queue.push(...linksOf($, res.url));
+          if (pages.length >= limit) break;
+        }
+      }
+      return pages;
+    })();
+    return this.crawlPromise;
+  }
+
   /** Lightweight status probe used by link checking. */
   async probe(url: string): Promise<number | null> {
     try {
@@ -172,3 +279,9 @@ export class ScanContext {
     return this.tlsPromise;
   }
 }
+
+/** Path-level identity for de-duplicating crawled URLs (ignores query, hash, trailing slash). */
+const canonicalPath = (url: string) => {
+  const u = new URL(url);
+  return `${u.origin}${u.pathname.replace(/\/+$/, "") || "/"}`;
+};

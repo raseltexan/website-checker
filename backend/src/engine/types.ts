@@ -20,6 +20,8 @@ export interface CheckDefinition {
   severity: Severity;
   weight: number;
   requires?: CheckRequirement;
+  /** Always included in every scan; cannot be deselected by users or disabled by admins. */
+  mandatory?: boolean;
   run: (ctx: ScanContext) => Promise<CheckOutcome>;
 }
 

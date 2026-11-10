@@ -5,7 +5,7 @@ import { usersRouter } from "./modules/users/users.routes.js";
 import { websitesRouter } from "./modules/websites/websites.routes.js";
 import { scansRouter } from "./modules/scans/scans.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
-import { checkersRouter } from "./modules/checkers/checkers.routes.js";
+import { checkersRouter, publicCheckersRouter } from "./modules/checkers/checkers.routes.js";
 import { plansRouter } from "./modules/plans/plans.routes.js";
 import { billingRouter } from "./modules/billing/billing.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
@@ -18,6 +18,7 @@ export const apiRouter = Router();
 // Public
 apiRouter.use("/settings/public", publicSettingsRouter);
 apiRouter.use("/plans", plansRouter);
+apiRouter.use("/public/checkers", publicCheckersRouter);
 
 // Admin (has its own auth + role guard)
 apiRouter.use("/admin", adminRouter);

@@ -10,6 +10,7 @@ export const generalSettingsSchema = z.object({
 export const auditSettingsSchema = z.object({
   requestTimeoutMs: z.number().int().min(2000).max(60000).default(15000),
   maxLinksToCheck: z.number().int().min(0).max(200).default(40),
+  maxPagesToCrawl: z.number().int().min(1).max(50).default(10),
   maxRedirects: z.number().int().min(0).max(20).default(10),
   slowTtfbMs: z.number().int().min(100).max(10000).default(800),
   maxPageSizeKb: z.number().int().min(100).max(20000).default(3000),

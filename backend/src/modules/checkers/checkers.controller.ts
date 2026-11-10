@@ -8,6 +8,11 @@ export const listEnabled = async (_req: Request, res: Response) => {
   sendResponse(res, { data: await service.listEnabledCatalog() });
 };
 
+export const stats = async (_req: Request, res: Response) => {
+  res.set("Cache-Control", "public, max-age=60");
+  sendResponse(res, { data: await service.publicStats() });
+};
+
 export const listAll = async (_req: Request, res: Response) => {
   sendResponse(res, { data: await service.listFullCatalog() });
 };
